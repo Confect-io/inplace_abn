@@ -25,25 +25,14 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
-if torch.has_cuda or getenv("IABN_FORCE_CUDA") == "1":
-    ext_modules = [
-        CUDAExtension(
-            name="inplace_abn._backend",
-            sources=find_sources("src"),
-            extra_compile_args={"cxx": ["-O3"], "nvcc": []},
-            include_dirs=[path.join(here, "include")],
-            define_macros=[("WITH_CUDA", 1)],
-        )
-    ]
-else:
-    ext_modules = [
-        CppExtension(
-            name="inplace_abn._backend",
-            sources=find_sources("src", False),
-            extra_compile_args=["-O3"],
-            include_dirs=[path.join(here, "include")],
-        )
-    ]
+ext_modules = [
+    CppExtension(
+        name="inplace_abn._backend",
+        sources=find_sources("src", False),
+        extra_compile_args=["-O3"],
+        include_dirs=[path.join(here, "include")],
+    )
+]
 
 setuptools.setup(
     # Meta-data
