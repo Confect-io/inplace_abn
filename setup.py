@@ -41,7 +41,7 @@ ext_modules = [
     setuptools.Extension(
         name="inplace_abn._backend",
         sources=find_sources("src", False),
-        extra_compile_args=["-O3", "-g", "-stdlib=libc++", "-std=c++11"],
+        extra_compile_args=["-Wall", "-g", "-stdlib=libc++", "-std=c++11"],
         include_dirs=[path.join(here, "include")],
     )
 ]
