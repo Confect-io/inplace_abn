@@ -1,10 +1,22 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 
-from os import path, walk, getenv
+from os import getenv, path, walk
 
 import setuptools
-import torch
-from torch.utils.cpp_extension import BuildExtension, CUDAExtension, CppExtension
+from setuptools.command.build_ext import build_ext
+
+
+class BuildExtensionCommand(build_ext):
+    def run(self):
+        from torch.utils.cpp_extension import BuildExtension
+
+        return BuildExtension.with_options(
+            no_python_abi_suffix=True, use_ninja=False
+        ).run(self)
+
+    @staticmethod
+    def get_source_files():
+        return []
 
 
 def find_sources(root_dir, with_cuda=True):
@@ -26,7 +38,7 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
 ext_modules = [
-    CppExtension(
+    setuptools.Extension(
         name="inplace_abn._backend",
         sources=find_sources("src", False),
         extra_compile_args=["-O3"],
@@ -57,10 +69,10 @@ setuptools.setup(
         "write_to": "inplace_abn/_version.py",
     },
     # Requirements
-    setup_requires=["setuptools_scm"],
+    setup_requires=["setuptools_scm", "torch"],
     python_requires=">=3, <4",
     # Package description
     packages=["inplace_abn"],
     ext_modules=ext_modules,
-    cmdclass={"build_ext": BuildExtension},
+    cmdclass={"build_ext": BuildExtensionCommand},
 )
