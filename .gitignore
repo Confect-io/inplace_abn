@@ -113,3 +113,5 @@ _ext
 # setuptools
 dist/
 *.egg-info
+
+.eggs/
