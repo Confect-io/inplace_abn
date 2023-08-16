@@ -8,11 +8,22 @@ from setuptools.command.build_ext import build_ext
 
 class BuildExtensionCommand(build_ext):
     def run(self):
-        from torch.utils.cpp_extension import BuildExtension
+        from torch.utils.cpp_extension import BuildExtension, CppExtension
 
-        return BuildExtension.with_options(
+        self.extensions = [
+            CppExtension(
+                name=e.name,
+                sources=e.sources,
+                include_dirs=[path.join(here, "include")],
+            )
+            for e in self.extensions
+        ]
+        self.swig_opts = ""
+        self.finalize_options()
+        ext = BuildExtension.with_options(
             no_python_abi_suffix=True, use_ninja=False
-        ).run(self)
+        )
+        ext.run(self)
 
     @staticmethod
     def get_source_files():
@@ -41,7 +52,7 @@ ext_modules = [
     setuptools.Extension(
         name="inplace_abn._backend",
         sources=find_sources("src", False),
-        extra_compile_args=["-Wall", "-g", "-stdlib=libc++", "-std=c++11"],
+        extra_compile_args=["-O3"],
         include_dirs=[path.join(here, "include")],
     )
 ]
