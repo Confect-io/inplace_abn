@@ -6,23 +6,34 @@ import setuptools
 from setuptools.command.build_ext import build_ext
 
 
+FALLBACK_EXT = False
+try:
+    from torch.utils.cpp_extension import CppExtension as ce
+except ImportError:
+    print("Torch not found yet, will try in another way")
+    ce = setuptools.Extension
+    FALLBACK_EXT = True
+
+
 class BuildExtensionCommand(build_ext):
     def run(self):
         from torch.utils.cpp_extension import BuildExtension, CppExtension
 
-        self.extensions = [
-            CppExtension(
-                name=e.name,
-                sources=e.sources,
-                include_dirs=[path.join(here, "include")],
-            )
-            for e in self.extensions
-        ]
-        self.swig_opts = ""
-        self.finalize_options()
-        ext = BuildExtension.with_options(
-            no_python_abi_suffix=True, use_ninja=False
-        )
+        if FALLBACK_EXT:
+            # Attempt patching in torch stuff later
+            self.extensions = [
+                CppExtension(
+                    name=e.name,
+                    sources=e.sources,
+                    include_dirs=[path.join(here, "include")],
+                    extra_compile_args=["-g", "-Wall", "-std=c++17", "-O3"],
+                )
+                for e in self.extensions
+            ]
+            self.swig_opts = ""
+            self.finalize_options()
+
+        ext = BuildExtension.with_options(no_python_abi_suffix=True, use_ninja=False)
         ext.run(self)
 
     @staticmethod
@@ -49,10 +60,10 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
 ext_modules = [
-    setuptools.Extension(
+    ce(
         name="inplace_abn._backend",
         sources=find_sources("src", False),
-        extra_compile_args=["-O3"],
+        extra_compile_args=["-g", "-std=c++17", "-O3"],
         include_dirs=[path.join(here, "include")],
     )
 ]
